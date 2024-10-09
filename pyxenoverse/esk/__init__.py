@@ -117,8 +117,37 @@ class ESK(BaseRecord):
 
             self.bones.append(bone)
 
-        f.seek(base_skeleton_address + self.unknown_offset_0)
-        unknown_0 = struct.unpack('<I', f.read(4))[0]
+        f.seek(0, 2)
+        fsize = f.tell()
+        self.fsize = fsize
+
+        # if we can read all 128 bytes, then do it -- this case handles, say, accessoories' esk, which don't use this set of unks
+        if self.unknown_offset_0 and fsize - (base_skeleton_address + self.unknown_offset_0 + 4 * 31) >= 0:
+            self.m_have_128_unknown_bytes = True
+            self.num_unknown_bytes = self.unknown_offset_1 - self.unknown_offset_0
+            self.num_unknown_sections = (self.num_unknown_bytes - 4) // 24
+            
+            if (self.num_unknown_bytes - 4) % 24 != 0:
+                print(f"WARNING: UNK1 SECTION DOES NOT HAVE MULTIPLE OF 24 BYTES (GOT {self.num_unknown_bytes-4} BYTES)")
+            
+            f.seek(base_skeleton_address + self.unknown_offset_0)
+            self.unk1_I_00 = struct.unpack(endian + 'I', f.read(4))[0]
+            
+            self.unk1_sections = []
+            for _ in range(self.num_unknown_sections):
+                self.unk1_sections.append(UNK1Section(
+                    *struct.unpack(
+                        endian + UNK1_SECTION_BYTE_ORDER,
+                        f.read(UNK1_SECTION_SIZE)
+                        )
+                    ))
+        else:
+            self.m_have_128_unknown_bytes = False
+            self.num_unknown_bytes = 0
+            self.num_unknown_sections = 0
+            self.unk1_I_00 = 0
+            self.unk1_sections = []
+        
         self.m_have_128_unknown_bytes = (unknown_0 == 5)
 
     def write(self, f, endian, with_transform_matrix=True):
