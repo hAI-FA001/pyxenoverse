@@ -1,6 +1,7 @@
 import math
 from recordclass import recordclass
 import struct
+import numpy as np
 
 from pyxenoverse import BaseRecord, read_name, write_name
 from pyxenoverse.esk.bone import Bone
@@ -23,6 +24,21 @@ ESKHeader = recordclass('ESKHeader', [
 ESK_HEADER_SIZE = 36
 ESK_HEADER_BYTE_ORDER = 'HHIIIIIIII'
 
+UNK1_I_00_NAME = "Number Sections"
+UNK1_SECTION_NAMES = ["Section Flags", "Control Flags", "Bone", "BoneParent1", "BoneParent2", "Pad1", "Factor", "Pad2"]
+UNK1Section = recordclass("UNK1Section", [
+    "sectionFlags",
+    "controlFlags",
+    "bone",
+    "boneParent1",
+    "boneParent2",
+    "pad1",
+    "factor",
+    "pad2"
+    ])
+UNK1_SECTION_SIZE = 24
+UNK1_SECTION_BYTE_ORDER = 'IHHHHIfI'
+
 
 class ESK(BaseRecord):
     def __init__(self, endian='<'):
@@ -31,6 +47,7 @@ class ESK(BaseRecord):
         self.m_have_128_unknown_bytes = True
         self.endian = endian
         self.filename = ''
+
         super().__init__()
 
     def load(self, filename):
