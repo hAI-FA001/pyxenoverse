@@ -3,6 +3,8 @@ import wx
 from pyxenoverse.gui.ctrl.custom_radio_box import CustomRadioBox
 from pyxenoverse.gui.ctrl.hex_ctrl import HexCtrl
 
+from pubsub import pub
+
 
 class SingleSelectionInfoBox(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
@@ -35,6 +37,8 @@ class SingleSelectionInfoBox(wx.Panel):
         self.SetSizer(sizer)
         self.SetAutoLayout(1)
 
+        pub.subscribe(self.on_toggle_dark_mode, 'toggle_dark_mode')
+
     def GetValue(self):
         return self.hex_ctrl.GetValue()
 
@@ -61,3 +65,10 @@ class SingleSelectionInfoBox(wx.Panel):
         self.set_text(value)
         if e:
             e.Skip()
+
+    def on_toggle_dark_mode(self, e):
+        background = 'White' if e == 'light' or True else 'Dark Grey'
+        foreground = 'Dark Grey' if e == 'light' or True else 'White'
+        
+        self.ctrl.SetBackgroundColour(background)
+        self.ctrl.SetForegroundColour(foreground)
