@@ -36,7 +36,8 @@ class Collision(BaseRecord):
         0x9: "Ki blast",
         0xa: "Unknown (0xa)",
         0xb: "Stage (0xb)",
-        0xc: "Awoken"
+        0xc: "Awoken",
+        0xffff: "Unknown (0xFFFF)"
     }
 
 
