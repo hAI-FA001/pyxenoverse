@@ -157,7 +157,12 @@ class ESK(BaseRecord):
                 self.unk2_list.append(struct.unpack(endian + 'I', f.read(4))[0])
         else:
             self.m_have_unk2 = False
-        
+            
+        if endian == '<':
+            self.skeletonId = (self.unknown_offset_2) | (self.unknown_offset_3 << 32)
+        else:
+            self.skeletonId = (self.unknown_offset_2 << 32) | (self.unknown_offset_3)
+
 
     def write(self, f, endian, with_transform_matrix=True):
         base_skeleton_address = f.tell()
