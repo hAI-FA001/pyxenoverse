@@ -148,7 +148,16 @@ class ESK(BaseRecord):
             self.unk1_I_00 = 0
             self.unk1_sections = []
         
-        self.m_have_128_unknown_bytes = (unknown_0 == 5)
+        # check if unk2 exist
+        self.unk2_list = []
+        if self.unknown_offset_1 != 0:
+            self.m_have_unk2 = True
+            f.seek(base_skeleton_address + self.unknown_offset_1)
+            for i in range(2 * self.bone_count):
+                self.unk2_list.append(struct.unpack(endian + 'I', f.read(4))[0])
+        else:
+            self.m_have_unk2 = False
+        
 
     def write(self, f, endian, with_transform_matrix=True):
         base_skeleton_address = f.tell()
