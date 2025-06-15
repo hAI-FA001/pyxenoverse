@@ -159,47 +159,15 @@ class BAC:
         entry_offset = self.header.data_start
         sub_entry_offset = entry_offset + 16 * len(self.entries)
 
-
-        from threading import Thread, RLock
-        lock = RLock()
+        # remove dummy
         num_sub_entries = 0
-        def remove_dummy(entry: BAC):
-            nonlocal num_sub_entries
-            
-            entry.sub_entries = list(filter(lambda sub_entry: len(sub_entry.items) > 0, entry.sub_entries))
-            # entry.sub_entries = [sub_entry for sub_entry in entry.sub_entries if len(sub_entry.items) > 0]
-            lock.acquire()
-            num_sub_entries += len(entry.sub_entries)
-            lock.release()
-        
-        threads = []
-        # Delete any dummy entries automatically
         for entry in self.entries:
-            t = Thread(target=remove_dummy, args=(entry,))
-            t.start()
-            threads.append(t)
-        for t in threads:
-            t.join()
-            
-            
+            entry.sub_entries = [sub_entry for sub_entry in entry.sub_entries if len(sub_entry.items) > 0]
+            num_sub_entries += len(entry.sub_entries)
+        
+        item_offset = sub_entry_offset + 16*num_sub_entries
 
-        item_offset = sub_entry_offset + 16 * num_sub_entries
-
-        writeLock = RLock()
-        def write_entry(entry: Entry):
-            nonlocal entry_offset, sub_entry_offset, item_offset
-            
-            writeLock.acquire()
+        for i, entry in enumerate(self.entries):
             f.seek(entry_offset)
             sub_entry_offset, item_offset = entry.write(f, sub_entry_offset, item_offset, endian)
             entry_offset += 16
-            writeLock.release()
-            
-        threads.clear()
-        for i, entry in enumerate(self.entries):
-            t = Thread(target=write_entry, args=(entry,))
-            t.start()
-            threads.append(t)
-        for t in threads:
-            t.join()
-            
