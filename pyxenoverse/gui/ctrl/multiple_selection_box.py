@@ -5,6 +5,8 @@ from pyxenoverse.gui.ctrl.custom_radio_box import CustomRadioBox
 from pyxenoverse.gui.ctrl.dummy_ctrl import DummyCtrl
 from pyxenoverse.gui.ctrl.hex_ctrl import HexCtrl
 
+from pubsub import pub
+
 
 class MultipleSelectionBox(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
@@ -43,6 +45,8 @@ class MultipleSelectionBox(wx.Panel):
         self.SetSizer(sizer)
         self.SetAutoLayout(1)
 
+        pub.subscribe(self.on_toggle_dark_mode, 'toggle_dark_mode')
+
     def GetValue(self):
         return self.hex_ctrl.GetValue()
 
@@ -61,3 +65,11 @@ class MultipleSelectionBox(wx.Panel):
             ctrl.SetValue((value >> (4 * i)) & sum(1 << n for n in range(ctrl.GetLength())))
         if e:
             e.Skip()
+    
+    def on_toggle_dark_mode(self, e):
+        background = 'White' if e == 'light' or True else 'Dark Grey'
+        foreground = 'Dark Grey' if e == 'light' or True else 'White'
+        for i, ctrl in enumerate(self.selections):
+            if hasattr(ctrl, "SetBackgroundColour"):
+                ctrl.SetBackgroundColour(background)
+                ctrl.SetForegroundColour(foreground)

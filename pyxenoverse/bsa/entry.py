@@ -54,11 +54,14 @@ class DataList(list):
         self.extend(other.copy())
 
     def get_name(self):
-        print("GET NAME CALLED")
+        # print("GET NAME CALLED")
         return self.name
 
     def get_readable_name(self):
         return reduce(lambda x, y: x + (' ' if y.isupper() else '') + y, self.get_name())
+    
+    def copy(self):
+        return DataList(self.name, lst=super().copy())
 
 
 

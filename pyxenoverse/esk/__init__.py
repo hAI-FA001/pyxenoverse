@@ -1,6 +1,7 @@
 import math
 from recordclass import recordclass
 import struct
+import numpy as np
 
 from pyxenoverse import BaseRecord, read_name, write_name
 from pyxenoverse.esk.bone import Bone
@@ -23,6 +24,21 @@ ESKHeader = recordclass('ESKHeader', [
 ESK_HEADER_SIZE = 36
 ESK_HEADER_BYTE_ORDER = 'HHIIIIIIII'
 
+UNK1_I_00_NAME = "Number Sections"
+UNK1_SECTION_NAMES = ["Section Flags", "Control Flags", "Bone", "BoneParent1", "BoneParent2", "Pad1", "Factor", "Pad2"]
+UNK1Section = recordclass("UNK1Section", [
+    "sectionFlags",
+    "controlFlags",
+    "bone",
+    "boneParent1",
+    "boneParent2",
+    "pad1",
+    "factor",
+    "pad2"
+    ])
+UNK1_SECTION_SIZE = 24
+UNK1_SECTION_BYTE_ORDER = 'IHHHHIfI'
+
 
 class ESK(BaseRecord):
     def __init__(self, endian='<'):
@@ -31,6 +47,7 @@ class ESK(BaseRecord):
         self.m_have_128_unknown_bytes = True
         self.endian = endian
         self.filename = ''
+
         super().__init__()
 
     def load(self, filename):
@@ -60,6 +77,7 @@ class ESK(BaseRecord):
 
     def read(self, f, endian):
         base_skeleton_address = f.tell()
+        self.base_skeleton_address = base_skeleton_address
         self.data = ESKHeader(*struct.unpack(endian + ESK_HEADER_BYTE_ORDER, f.read(ESK_HEADER_SIZE)))
         # print("--------------- read ESK \n[{}] bone_count : {}, flag : {}, bone_indices_offset : [{}],"
         #       " bone_names_offset : [{}], skinning_matrix_offset : [{}], transform_matrix_offset : [{}],"
@@ -100,9 +118,52 @@ class ESK(BaseRecord):
 
             self.bones.append(bone)
 
-        f.seek(base_skeleton_address + self.unknown_offset_0)
-        unknown_0 = struct.unpack('<I', f.read(4))[0]
-        self.m_have_128_unknown_bytes = (unknown_0 == 5)
+        f.seek(0, 2)
+        fsize = f.tell()
+        self.fsize = fsize
+
+        # if we can read all 128 bytes, then do it -- this case handles, say, accessoories' esk, which don't use this set of unks
+        if self.unknown_offset_0 and fsize - (base_skeleton_address + self.unknown_offset_0 + 4 * 31) >= 0:
+            self.m_have_128_unknown_bytes = True
+            self.num_unknown_bytes = self.unknown_offset_1 - self.unknown_offset_0
+            self.num_unknown_sections = (self.num_unknown_bytes - 4) // 24
+            
+            if (self.num_unknown_bytes - 4) % 24 != 0:
+                print(f"WARNING: UNK1 SECTION DOES NOT HAVE MULTIPLE OF 24 BYTES (GOT {self.num_unknown_bytes-4} BYTES)")
+            
+            f.seek(base_skeleton_address + self.unknown_offset_0)
+            self.unk1_I_00 = struct.unpack(endian + 'I', f.read(4))[0]
+            
+            self.unk1_sections = []
+            for _ in range(self.num_unknown_sections):
+                self.unk1_sections.append(UNK1Section(
+                    *struct.unpack(
+                        endian + UNK1_SECTION_BYTE_ORDER,
+                        f.read(UNK1_SECTION_SIZE)
+                        )
+                    ))
+        else:
+            self.m_have_128_unknown_bytes = False
+            self.num_unknown_bytes = 0
+            self.num_unknown_sections = 0
+            self.unk1_I_00 = 0
+            self.unk1_sections = []
+        
+        # check if unk2 exist
+        self.unk2_list = []
+        if self.unknown_offset_1 != 0:
+            self.m_have_unk2 = True
+            f.seek(base_skeleton_address + self.unknown_offset_1)
+            for i in range(2 * self.bone_count):
+                self.unk2_list.append(struct.unpack(endian + 'I', f.read(4))[0])
+        else:
+            self.m_have_unk2 = False
+            
+        if endian == '<':
+            self.skeletonId = (self.unknown_offset_2) | (self.unknown_offset_3 << 32)
+        else:
+            self.skeletonId = (self.unknown_offset_2 << 32) | (self.unknown_offset_3)
+
 
     def write(self, f, endian, with_transform_matrix=True):
         base_skeleton_address = f.tell()
@@ -116,11 +177,22 @@ class ESK(BaseRecord):
             else 0
         self.unknown_offset_0 = self.transform_matrix_offset + self.bone_count * 64 if with_transform_matrix \
             else self.skinning_matrix_offset + self.bone_count * 48
-        self.unknown_offset_1 = self.unknown_offset_0 + 124
+        self.unknown_offset_1 = self.unknown_offset_0 + self.num_unknown_bytes
+
+        if endian == '<':
+            self.unknown_offset_2 = self.skeletonId & 0xFFFFFFFF  # extract lower 4 bytes
+            self.unknown_offset_3 = self.skeletonId & (0xFFFFFFFF << 32)  # extract higher 4 bytes
+            self.unknown_offset_3 >>= 32  # shift it back to lower 4 bytes
+        else:
+            self.unknown_offset_2 = self.skeletonId & (0xFFFFFFFF << 32)
+            self.unknown_offset_2 >>= 32
+            self.unknown_offset_3 = self.skeletonId & 0xFFFFFFFF
 
         if not self.m_have_128_unknown_bytes:
             self.unknown_offset_1 = self.unknown_offset_0
             self.unknown_offset_0 = 0
+        if not self.m_have_unk2:
+            self.unknown_offset_1 = 0
 
         f.write(struct.pack(endian + ESK_HEADER_BYTE_ORDER, *self.data))
         # print("--------------- write ESK \n[{}] bone_count : {}, flag : {}, bone_indices_offset : [{}],"
@@ -152,24 +224,23 @@ class ESK(BaseRecord):
                 f.seek(base_skeleton_address + self.transform_matrix_offset + i * 64)
                 bone.write_transform_matrix(f, endian)
 
-        # unknown_offset_0: 128 bytes always the same
-        if self.unknown_offset_0:
+        # unknown_offset_0: 128 bytes always the same - edit: always *NOT* the same
+        # if self.unknown_offset_0:
+        if self.m_have_128_unknown_bytes:
             f.seek(base_skeleton_address + self.unknown_offset_0)
+            f.write(struct.pack(endian + 'I', self.unk1_I_00))
+            for section in self.unk1_sections:
+                f.write(struct.pack(endian + UNK1_SECTION_BYTE_ORDER, *section))
             # print(f.tell())
-            f.write(struct.pack(
-                '<' + 'I' * 31,
-                0x00000005, 0x00180001, 0x00080200, 0x00040003, 0x00000000, 0x3F000000, 0x00000000, 0x00180001,
-                0x000E0200, 0x000A0009, 0x00000000, 0x3F000000, 0x00000000, 0x00180001, 0x00150200, 0x00160014,
-                0x00000000, 0x3F000000, 0x00000000, 0x00180001, 0x00400200, 0x002D002C, 0x00000000, 0x3F000000,
-                0x00000000, 0x00180001, 0x00600200, 0x004B0046, 0x00000000, 0x3F000000, 0x00000000
-            ))
 
-        # unknown_offset_1 : the same for all bones : 8 octets with FFFF 0000 0000 0000 (except the last)
-        # Hyp : it's the weights of a pyxenoverse on animation ? FFFF for full influence ?
-        f.seek(base_skeleton_address + self.unknown_offset_1)
+        if self.m_have_unk2:
+            # unknown_offset_1 : the same for all bones : 8 octets with FFFF 0000 0000 0000 (except the last)
+            # Hyp : it's the weights of a pyxenoverse on animation ? FFFF for full influence ?
+            f.seek(base_skeleton_address + self.unknown_offset_1)
+            # don't hardcode...
+            # f.write(struct.pack(endian + 'I'*(2 * self.bone_count), *self.unk2_list))
+            f.write(struct.pack(endian + 'I'*(2 * self.bone_count), *[0 if i % 2 == 0 else 65535 for i in range(2 * self.bone_count)]))
 
-        for i in range(self.bone_count):
-            f.write(struct.pack(endian + 'II', 0, 0x0000FFFF))
 
     def get_bone_difference(self, other):
         bone_names = set(bone.name for bone in self.bones[1:])

@@ -2,7 +2,7 @@ from recordclass import recordclass
 
 from pyxenoverse.bac.types import BaseType
 
-BACType28 = recordclass('BACType28', [
+BACDYTChanger = recordclass('BACDYTChanger', [
     'start_time',
     'duration',
     'u_04',
@@ -19,9 +19,9 @@ BACType28 = recordclass('BACType28', [
 
 
 # Type 28
-class Type28(BaseType):
+class DYTChanger(BaseType):
     type = 28
-    bac_record = BACType28
+    bac_record = BACDYTChanger
     byte_order = 'HHHH IIffIII'
     size = 36
 

@@ -31,9 +31,10 @@ from pyxenoverse.bac.types.dual_skill_handler import DualSkillHandler
 from pyxenoverse.bac.types.charge_attack_parameters import ChargeAttackParameters
 from pyxenoverse.bac.types.extended_camera_control import ExtendedCameraControl
 from pyxenoverse.bac.types.effect_property_control import EffectPropertyControl
-from pyxenoverse.bac.types.type28 import Type28
-from pyxenoverse.bac.types.type29 import Type29
+from pyxenoverse.bac.types.dyt_changer import DYTChanger
+from pyxenoverse.bac.types.emm_edit import EMMEdit
 from pyxenoverse.bac.types.type30 import Type30
+from pyxenoverse.bac.types.type31 import Type31
 
 ITEM_TYPES = {
     0: Animation,
@@ -64,9 +65,10 @@ ITEM_TYPES = {
     25: ChargeAttackParameters,
     26: ExtendedCameraControl,
     27: EffectPropertyControl,
-    28: Type28,
-    29: Type29,
-    30: Type30
+    28: DYTChanger,
+    29: EMMEdit,
+    30: Type30,
+    31: Type31,
 }
 
 BACSubEntry = recordclass('BACSubEntry', [

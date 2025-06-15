@@ -25,9 +25,9 @@ class Physics(BaseType):
 
     description_type = "function_type"
     description = {
-        0x0: "Unknown",
         0x1: "Simulate Physics",
-        0x2: "Play SCD Animations"
+        0x2: "Unknown",
+        0x3: "Play SCD Animations",
     }
 
     def __init__(self, index):

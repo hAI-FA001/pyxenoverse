@@ -46,8 +46,10 @@ BDMType1 = recordclass('BDMType1', [
     'secondary_type',
     'camera_shake_type',
     'camera_shake_time',
-    'user_screen_flash_transparency',
-    'victim_screen_flash_transparency',
+    # 'user_screen_flash_transparency',
+    'user_bpe_id',
+    # 'victim_screen_flash_transparency',
+    'opponent_bpe_id',
     'u_68'
 ])
 

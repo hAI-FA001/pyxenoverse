@@ -36,10 +36,15 @@ FUNCTION_MAPPINGS = {
     0x14: ('Set BCS Part (Permanent)', 'Partset Id', None, None, None, None),
     0x15: ('Remove user', None, None, None, None, None),
     0x16: ('Give/take stamina', 'Stamina', None, None, None, None),
+    
+    0x17: ("Recover Health (instant)", "Health Amount", None, None, None, None),
+    
     0x1b: ('Limited transformation', None, None, None, None, None),
     0x1d: ('Go to entry', 'BAC Entry', None, None, None, None),
+
+    0x1e: ("Disable Movement (0x1e)", None, None, None, None, None),
+
     0x1f: ('Reset Camera', None, None, None, None, None),
-    0x2f: ('Display Time Skip Behavior', None, None, None, None, None),
     0x20: ('Disable movement/skill', None, None, None, None, None),
     0x22: ('Loop (Hold Down)', None, None, None, None, None),
     0x23: ('Floating rocks', None, None, None, None, None),
@@ -51,11 +56,18 @@ FUNCTION_MAPPINGS = {
     0x2a: ('BCS Bonescale', 'Bonescale Id', None, None, None, None),
     0x2d: ('No-clip', 'Unknown', None, None, None, None),
     0x2e: ('Big collision box', 'Unknown', None, None, None, None),
+    0x2f: ('Display Time Skip Behavior', None, None, None, None, None),
     0x30: ('Black void', None, None, None, None, None),
     0x31: ('Regen health', 'Health', None, None, None, None),
     0x39: ('Split Camera for Dual Skills', 'Unknown', None, None, None, None),
     0x3c: ('Stun', 'Stun Duration', None, None, None, None),
+
+    0x3d: ("Force End BAC Loop", None, None, None, None, None),
+
     0x3f: ('Limit burst', None, None, None, None, None),
+    
+    0x40: ("Auto Lock-On", "Range", None, None, None, None),
+
     0x43: ('Auto-dodge', 'Stamina cost', None, None, None, None),
     0x44: ('Damage x10', 'Damage', None, None, None, None),
     0x4a: ('Skill Cooldown', 'Cooldown duration', None, None, None, None),

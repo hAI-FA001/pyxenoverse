@@ -7,8 +7,15 @@ BACTransparencyEffect = recordclass('BACTransparencyEffect', [
     'duration',
     'u_04',
     'character_type',
+    
+    # 'transparency_flags',
     'transparency_flags',
-    'transparency_flags2',
+    'vertical_gap_width',
+    # 'transparency_flags2',
+    'horizontal_gap_width',
+    'visible_pixel_width',
+
+    
     'dilution',
     'u_0e',
     'u_10',
@@ -30,7 +37,8 @@ BACTransparencyEffect = recordclass('BACTransparencyEffect', [
 class TransparencyEffect(BaseType):
     type = 23
     bac_record = BACTransparencyEffect
-    byte_order = 'HHHHHHHHIfffffffffff'
+    # byte_order = 'HHHHHHHHIfffffffffff'
+    byte_order = 'HHHHBBBBHHIfffffffffff'
     size = 64
 
     def __init__(self, index):

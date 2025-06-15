@@ -46,11 +46,24 @@ class Projectile(BaseType):
         0x5: "Super",
         0x6: "Ultimate",
         0x7: "Evasive",
-        0x8: "Blast"
+        0x9: "KI Blast"
     }
 
     def __init__(self, index):
         super().__init__(index)
+
+    def __getattr__(self, item):
+        if item == self.description_type:
+            try:
+                # only get the LSB (which tells us the skill type, which is displayed on the label)
+                return self.data.__getattribute__(item) & 0xF
+            except AttributeError:
+                return super().__getattribute__(item)
+        else:
+            try:
+                return self.data.__getattribute__(item)
+            except AttributeError:
+                return super().__getattribute__(item)
 
     def read(self, f, endian, _):
         self.data = self.bac_record(*struct.unpack(endian + self.byte_order, f.read(self.size)))

@@ -2,7 +2,7 @@ from recordclass import recordclass
 
 from pyxenoverse.bac.types import BaseType
 
-BACType29 = recordclass('BACType29', [
+BACEMMEdit = recordclass('BACEMMEdit', [
     'start_time',
     'duration',
     'u_04',
@@ -25,9 +25,9 @@ BACType29 = recordclass('BACType29', [
 
 
 # Type 29
-class Type29(BaseType):
+class EMMEdit(BaseType):
     type = 29
-    bac_record = BACType29
+    bac_record = BACEMMEdit
     byte_order = 'HHHH II fffffffff II'
     size = 60
 
